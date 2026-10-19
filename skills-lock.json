@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "design": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/design/SKILL.md",
+      "computedHash": "d1cbc4bc8f0bd4273fae84014c6576615b13508743cd9c5240d721dc5143dc83"
+    },
+    "run-train": {
+      "source": "lllllllama/rigorpilot-skills",
+      "sourceType": "github",
+      "skillPath": "skills/run-train/SKILL.md",
+      "computedHash": "22841a114766338a9161ee93160dc12cf2825a7e961464d0b63e1ec665c60c53"
+    },
+    "status-report": {
+      "source": "anthropics/knowledge-work-plugins",
+      "sourceType": "github",
+      "skillPath": "operations/skills/status-report/SKILL.md",
+      "computedHash": "13a906131742cee26d08accdb41e76fc5981a852b4a68960988159a7054c5a4f"
+    },
+    "ui-styling": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-styling/SKILL.md",
+      "computedHash": "fa6d85097b0c131fb8708a6e7e08aff2af12fd2966cfe0a73bd258dcac99ea5b"
+    },
+    "workflow-visualizer": {
+      "source": "thecraighewitt/skills",
+      "sourceType": "github",
+      "skillPath": "cowork/workflow-visualizer/SKILL.md",
+      "computedHash": "d0bd4bbe811b30bb56e5966e0b29fe8ef440f86eb22146c2c505dffaf1e94b77"
+    }
+  }
+}
