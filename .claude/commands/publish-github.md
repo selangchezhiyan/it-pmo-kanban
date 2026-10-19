@@ -1,7 +1,7 @@
 ---
 description: Security-scan, push to GitHub, write the README and About section, and deploy GitHub Pages with CI/CD
 argument-hint: <owner/repo or repo URL> [public|private] [branch]
-allowed-tools: Bash, PowerShell, Read, Write, Edit, Grep, Glob
+allowed-tools: Bash, PowerShell, Read, Write, Edit, Grep, Glob, mcp__playwright__browser_navigate, mcp__playwright__browser_resize, mcp__playwright__browser_wait_for, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_close
 ---
 
 # Publish this project to GitHub
@@ -42,11 +42,25 @@ Print a short table: check → pass/fail → details (file:line). Continue only 
 - Make sure the branch is the requested one (`git branch -M <branch>` only if the repo has no other branches in use).
 - Commit any pending work with a clear message, then `git push -u origin <branch>`. Never `--force` unless the user says so.
 
-## 3. README.md (create or update)
+## 3. Screenshot (Playwright MCP)
+
+Capture the app with the `playwright` MCP server (configured in `.mcp.json`). If its tools are not available, say so, skip this step and leave the README's screenshot line out; do not install a browser or package without asking.
+
+1. Serve the folder locally (Playwright MCP blocks `file://`): in the background from the project root, start `python -m http.server 8765 --bind 127.0.0.1`, or if Python is missing (on Windows the `python` Store alias exits with code 49) use Node:
+   `node -e "const h=require('http'),f=require('fs'),p=require('path');h.createServer((q,r)=>{const u=decodeURIComponent(q.url.split('?')[0]);const fp=p.join(process.cwd(),u==='/'?'index.html':u);if(!fp.startsWith(process.cwd())||!f.existsSync(fp)||f.statSync(fp).isDirectory()){r.writeHead(404);return r.end()}r.writeHead(200,{'Content-Type':fp.endsWith('.html')?'text/html; charset=utf-8':'application/octet-stream'});f.createReadStream(fp).pipe(r)}).listen(8765,'127.0.0.1')"`
+2. `browser_resize` to 1440 × 900, then `browser_navigate` to `http://127.0.0.1:8765/index.html` and `browser_wait_for` the text `Backlog` (or another column heading).
+3. `browser_take_screenshot` with `filename: docs/screenshot.png`, `type: png`, `scale: css` (viewport, not full page). Check the saved path; if the tool saved it elsewhere, move it to `docs/screenshot.png`.
+4. `browser_close` and stop the HTTP server (find its PID with `netstat -ano | grep 8765`). Delete the `.playwright-mcp/` log folder and make sure it is in `.gitignore`. A console 404 for `favicon.ico` is expected and harmless.
+5. Open the image and check it shows the board with seed cards and no error. It must not show anything personal (no real email, no browser profile); the FormSubmit address is never visible on the page.
+
+The screenshot is repo documentation only: the deploy job publishes just `index.html`, so it never reaches Pages and the app still uses no image files.
+
+## 4. README.md (create or update)
 
 Read `index.html` and `CLAUDE.md` first and describe the real app; do not invent features. If a README exists, keep any user-written sections and update the rest. Include:
 
 - Title and one-paragraph summary (internal demo Kanban board for a fictitious bank's IT PMO; no real bank branding).
+- **Screenshot** right after the summary: `![IT PMO Kanban board](docs/screenshot.png)` (relative path, so it renders on GitHub). Replace an older screenshot rather than adding a second one.
 - **Live demo** link: `https://<owner>.github.io/<repo>/` (lowercase owner).
 - **Tech badges** (shields.io, static, no tracking params), e.g.:
   `![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)`
@@ -62,7 +76,7 @@ Read `index.html` and `CLAUDE.md` first and describe the real app; do not invent
 - **Deployment / CI** — what the workflow does.
 - **Project structure** — short file list.
 
-## 4. CI/CD (GitHub Actions)
+## 5. CI/CD (GitHub Actions)
 
 Create or update `.github/workflows/pages.yml` so that on push to `<branch>`, pull requests, and `workflow_dispatch`:
 
@@ -70,22 +84,22 @@ Create or update `.github/workflows/pages.yml` so that on push to `<branch>`, pu
 - A **`deploy`** job (`needs: check`, only on push/dispatch, not PRs) with `pages: write`, `id-token: write`, the `github-pages` environment, and `actions/checkout@v4` → copy only `index.html` (plus `.nojekyll`) into `_site` → `actions/configure-pages@v5` → `actions/upload-pages-artifact@v3` → `actions/deploy-pages@v4`. Do not publish `CLAUDE.md`, `.claude/` or other repo files.
 - Keep `concurrency: group: pages`.
 
-Commit README + workflow and push.
+Commit README, `docs/screenshot.png` and the workflow, and push.
 
-## 5. GitHub Pages
+## 6. GitHub Pages
 
 - Enable Pages with the Actions source:
   `gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow` (if it already exists: `gh api -X PUT repos/<owner>/<repo>/pages -f build_type=workflow`).
 - Watch the run: `gh run list --workflow pages.yml --limit 1`, then `gh run watch <id> --exit-status` (run it in the background). If it fails, read `gh run view <id> --log-failed`, fix, push, and retry.
 - Confirm the URL: `gh api repos/<owner>/<repo>/pages --jq .html_url`.
 
-## 6. About section
+## 7. About section
 
 `gh repo edit <owner/repo> --description "<one line, ≤ 120 chars, no real bank name>" --homepage "<pages URL>" --add-topic kanban --add-topic project-management --add-topic html --add-topic css --add-topic javascript --add-topic vanilla-js --add-topic github-pages`
 
 Then verify with `gh repo view <owner/repo> --json description,homepageUrl,repositoryTopics` that the homepage is the Pages link.
 
-## 7. Final security check and report
+## 8. Final security check and report
 
 - Re-run step 1 against what is actually on GitHub: `git fetch origin && git diff origin/<branch> --stat` should be empty, and re-scan `git ls-files`.
 - Fetch the live page (`curl -sI <pages URL>`) and confirm HTTP 200.
